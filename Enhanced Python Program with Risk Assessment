@@ -1,0 +1,87 @@
+import requests
+import pandas as pd
+import numpy as np
+from pycoingecko import CoinGeckoAPI
+import ta
+
+def fetch_crypto_data():
+    cg = CoinGeckoAPI()
+    data = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=10, page=1, sparkline=False)
+    return data
+
+def calculate_indicators(df):
+    # Calculate Simple Moving Averages (SMA)
+    df['sma_7'] = df['current_price'].rolling(window=7).mean()
+    df['sma_30'] = df['current_price'].rolling(window=30).mean()
+    
+    # Calculate Relative Strength Index (RSI)
+    df['rsi'] = ta.momentum.RSIIndicator(df['current_price'], window=14).rsi()
+    
+    # Calculate Moving Average Convergence Divergence (MACD)
+    macd = ta.trend.MACD(df['current_price'])
+    df['macd'] = macd.macd()
+    df['macd_signal'] = macd.macd_signal()
+    
+    return df
+
+def calculate_risk_metrics(df):
+    # Calculate daily returns
+    df['daily_return'] = df['current_price'].pct_change()
+    
+    # Calculate volatility (standard deviation of daily returns)
+    df['volatility'] = df['daily_return'].rolling(window=30).std()
+    
+    # Calculate Sharpe ratio (assuming risk-free rate is 0 for simplicity)
+    df['sharpe_ratio'] = df['daily_return'].rolling(window=30).mean() / df['volatility']
+    
+    return df
+
+def analyze_data(data):
+    df = pd.DataFrame(data)
+    df['price_change_percentage_24h'] = df['price_change_percentage_24h'].astype(float)
+    df['market_cap'] = df['market_cap'].astype(float)
+    df['total_volume'] = df['total_volume'].astype(float)
+    df['current_price'] = df['current_price'].astype(float)
+
+    # Calculate technical indicators
+    df = calculate_indicators(df)
+    
+    # Calculate risk metrics
+    df = calculate_risk_metrics(df)
+
+    # Filter criteria: highest 24h change, high market cap, high volume, price above SMA, RSI below 70, MACD above signal, high Sharpe ratio
+    filtered_df = df[(df['price_change_percentage_24h'] > 0) &
+                     (df['market_cap'] > df['market_cap'].mean()) &
+                     (df['total_volume'] > df['total_volume'].mean()) &
+                     (df['current_price'] > df['sma_7']) &
+                     (df['rsi'] < 70) &
+                     (df['macd'] > df['macd_signal']) &
+                     (df['sharpe_ratio'] > df['sharpe_ratio'].mean())]
+
+    if not filtered_df.empty:
+        best_crypto = filtered_df.loc[filtered_df['price_change_percentage_24h'].idxmax()]
+    else:
+        best_crypto = df.loc[df['price_change_percentage_24h'].idxmax()]
+
+    return best_crypto
+
+def main():
+    data = fetch_crypto_data()
+    best_crypto = analyze_data(data)
+    print("Best cryptocurrency to buy based on enhanced criteria and risk assessment:")
+    print(f"Name: {best_crypto['name']}")
+    print(f"Symbol: {best_crypto['symbol']}")
+    print(f"Current Price: ${best_crypto['current_price']}")
+    print(f"24h Change: {best_crypto['price_change_percentage_24h']}%")
+    print(f"Market Cap: ${best_crypto['market_cap']}")
+    print(f"Volume: ${best_crypto['total_volume']}")
+    print(f"SMA 7: ${best_crypto['sma_7']}")
+    print(f"SMA 30: ${best_crypto['sma_30']}")
+    print(f"RSI: {best_crypto['rsi']}")
+    print(f"MACD: {best_crypto['macd']}")
+    print(f"MACD Signal: {best_crypto['macd_signal']}")
+    print(f"Volatility: {best_crypto['volatility']}")
+    print(f"Sharpe Ratio: {best_crypto['sharpe_ratio']}")
+
+if __name__ == "__main__":
+    main()
