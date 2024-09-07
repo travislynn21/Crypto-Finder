@@ -1,0 +1,137 @@
+Disclaimer: Emphasize to users that this tool is for informational purposes only and is not financial advice.
+
+
+
+import requests
+import pandas as pd
+import numpy as np
+from pycoingecko import CoinGeckoAPI
+import ta
+import argparse
+import logging
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+from sklearn.ensemble import RandomForestRegressor
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def fetch_crypto_data():
+    try:
+        cg = CoinGeckoAPI()
+        data = cg.get_coins_markets(vs_currency='usd', order='market_cap_desc', per_page=10, page=1, sparkline=True)
+        return data
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error fetching data: {e}")
+        return None
+
+def fetch_fundamental_data():
+    # Example function to fetch fundamental data
+    pass
+
+def analyze_news_sentiment():
+    # Example function to analyze news sentiment
+    pass
+
+def fetch_on_chain_data():
+    # Example function to fetch on-chain data
+    pass
+
+def calculate_indicators(df):
+    df['sma_7'] = df['current_price'].rolling(window=7).mean()
+    df['sma_30'] = df['current_price'].rolling(window=30).mean()
+    df['rsi'] = ta.momentum.RSIIndicator(df['current_price'], window=14).rsi()
+    macd = ta.trend.MACD(df['current_price'])
+    df['macd'] = macd.macd()
+    df['macd_signal'] = macd.macd_signal()
+    return df
+
+def calculate_risk_metrics(df):
+    df['daily_return'] = df['current_price'].pct_change()
+    df['volatility'] = df['daily_return'].rolling(window=30).std()
+    df['sharpe_ratio'] = df['daily_return'].rolling(window=30).mean() / df['volatility']
+    df['cumulative_return'] = (1 + df['daily_return']).cumprod()
+    df['cumulative_max'] = df['cumulative_return'].cummax()
+    df['drawdown'] = df['cumulative_return'] / df['cumulative_max'] - 1
+    df['max_drawdown'] = df['drawdown'].rolling(window=30).min()
+    df['var_95'] = df['daily_return'].rolling(window=30).apply(lambda x: np.percentile(x, 5))
+    return df
+
+def analyze_data(data, thresholds):
+    df = pd.DataFrame(data)
+    df['price_change_percentage_24h'] = df['price_change_percentage_24h'].astype(float)
+    df['market_cap'] = df['market_cap'].astype(float)
+    df['total_volume'] = df['total_volume'].astype(float)
+    df['current_price'] = df['current_price'].astype(float)
+
+    df = calculate_indicators(df)
+    df = calculate_risk_metrics(df)
+
+    filtered_df = df[(df['price_change_percentage_24h'] > 0) &
+                     (df['market_cap'] > thresholds['market_cap']) &
+                     (df['total_volume'] > thresholds['volume']) &
+                     (df['current_price'] > df['sma_7']) &
+                     (df['rsi'] < thresholds['rsi']) &
+                     (df['macd'] > df['macd_signal']) &
+                     (df['sharpe_ratio'] > thresholds['sharpe_ratio']) &
+                     (df['max_drawdown'] > thresholds['max_drawdown']) &
+                     (df['var_95'] > thresholds['var_95'])]
+
+    if not filtered_df.empty:
+        best_crypto = filtered_df.loc[filtered_df['price_change_percentage_24h'].idxmax()]
+    else:
+        best_crypto = df.loc[df['price_change_percentage_24h'].idxmax()]
+
+    return best_crypto
+
+def main():
+    parser = argparse.ArgumentParser(description="Cryptocurrency Analysis Tool")
+    parser.add_argument('--market_cap', type=float, default=1e9, help='Minimum market cap threshold')
+    parser.add_argument('--volume', type=float, default=1e7, help='Minimum volume threshold')
+    parser.add_argument('--rsi', type=float, default=70, help='Maximum RSI threshold')
+    parser.add_argument('--sharpe_ratio', type=float, default=1, help='Minimum Sharpe ratio threshold')
+    parser.add_argument('--max_drawdown', type=float, default=-0.2, help='Maximum drawdown threshold')
+    parser.add_argument('--var_95', type=float, default=-0.05, help='Maximum VaR (95%) threshold')
+    parser.add_argument('--top_n', type=int, default=5, help='Number of top cryptocurrencies to display')
+    args = parser.parse_args()
+
+    thresholds = {
+        'market_cap': args.market_cap,
+        'volume': args.volume,
+        'rsi': args.rsi,
+        'sharpe_ratio': args.sharpe_ratio,
+        'max_drawdown': args.max_drawdown,
+        'var_95': args.var_95
+    }
+
+    data = fetch_crypto_data()
+    if data is None:
+        logging.error("Failed to fetch data. Exiting.")
+        return
+
+    filtered_df = analyze_data(data, thresholds)
+
+    if not filtered_df.empty:
+        top_cryptos = filtered_df.nlargest(args.top_n, 'price_change_percentage_24h')
+        print("Top cryptocurrencies based on enhanced criteria and risk assessment:")
+        for crypto in top_cryptos.itertuples():
+            print(f"Name: {crypto.name}")
+            print(f"Symbol: {crypto.symbol}")
+            print(f"Current Price: ${crypto.current_price}")
+            print(f"24h Change: {crypto.price_change_percentage_24h}%")
+            print(f"Market Cap: ${crypto.market_cap}")
+            print(f"Volume: ${crypto.total_volume}")
+            print(f"SMA 7: ${crypto.sma_7}")
+            print(f"SMA 30: ${crypto.sma_30}")
+            print(f"RSI: {crypto.rsi}")
+            print(f"MACD: {crypto.macd}")
+            print(f"MACD Signal: {crypto.macd_signal}")
+            print(f"Volatility: {crypto.volatility}")
+            print(f"Sharpe Ratio: {crypto.sharpe_ratio}")
+            print(f"Max Drawdown: {crypto.max_drawdown}")
+            print(f"VaR (95%): {crypto.var_95}")
+            print()
+    else:
+        logging.info("No cryptocurrencies met the filtering criteria.")
+
+if __name__ == "__main__":
+    main()
