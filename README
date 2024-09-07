@@ -1,0 +1,23 @@
+Step 1: Install Required Libraries
+Make sure you have the following libraries installed:
+
+pip install requests pandas numpy ta pycoingecko
+
+Running the Program
+Save the script to a file, for example, enhanced_crypto_analysis_with_risk.py, and run it using Python:
+
+python enhanced_crypto_analysis_with_risk.py
+
+Explanation
+Fetch Data: The fetch_crypto_data function uses the pycoingecko library to fetch real-time data for the top 10 cryptocurrencies by market cap.
+Calculate Indicators: The calculate_indicators function calculates technical indicators like SMA, RSI, and MACD.
+Calculate Risk Metrics: The calculate_risk_metrics function calculates volatility and Sharpe ratio to assess the risk.
+Analyze Data: The analyze_data function includes additional criteria:
+Highest 24-hour price increase.
+Market cap above the average market cap.
+Volume above the average volume.
+Current price above the 7-day SMA.
+RSI below 70 (to avoid overbought conditions).
+MACD above the MACD signal line (bullish signal).
+Sharpe ratio above the average Sharpe ratio (to ensure good risk-adjusted returns).
+Main Function: The main function fetches the data, analyzes it, and prints out the best cryptocurrency to buy based on the enhanced criteria and risk assessment.
