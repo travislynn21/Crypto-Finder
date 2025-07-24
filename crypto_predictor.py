@@ -294,32 +294,11 @@ def simplified_main():
         print("Could not fetch cryptocurrency data. Exiting.")
         return
 
-    while True:
-        print("\nWhat would you like to do?")
-        print("1. Get a recommendation for the best crypto to buy now.")
-        print("2. Assess your current portfolio.")
-        print("3. Get investment strategy advice.")
-        print("4. Exit.")
-
-        choice = input("Enter your choice (1-4): ")
-
-        if choice == '1':
-            best_crypto = analyze_data_with_ml(data)
-            print("\n🚀 Our top recommendation is:")
-            print(f"   - **{best_crypto['name']} ({best_crypto['symbol'].upper()})**")
-            print(f"   - Current Price: ${best_crypto['current_price']:.2f}")
-            print(f"   - Why? It shows strong potential based on our advanced market analysis.")
-        elif choice == '2':
-            portfolio = get_user_portfolio()
-            assess_portfolio(portfolio, data)
-        elif choice == '3':
-            portfolio = get_user_portfolio()
-            strategy_section(portfolio, data)
-        elif choice == '4':
-            print("Goodbye and happy investing!")
-            break
-        else:
-            print("Invalid choice. Please enter a number between 1 and 4.")
+    best_crypto = analyze_data_with_ml(data)
+    print("\n🚀 Our top recommendation is:")
+    print(f"   - **{best_crypto['name']} ({best_crypto['symbol'].upper()})**")
+    print(f"   - Current Price: ${best_crypto['current_price']:.2f}")
+    print(f"   - Why? It shows strong potential based on our advanced market analysis.")
 
 if __name__ == "__main__":
     simplified_main()
