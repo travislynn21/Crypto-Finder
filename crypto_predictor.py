@@ -135,15 +135,121 @@ def assess_portfolio(portfolio, all_crypto_data):
 
     print(f"\nTotal Portfolio Value: ${portfolio_value:,.2f}")
 
+def ai_bot_advisor(portfolio, all_crypto_data):
+    print("\n🤖 AI Bot Advisor:")
+
+    if not portfolio:
+        print("Your portfolio is empty. Here's a general tip:")
+        print("- Diversify your investments across different types of cryptocurrencies.")
+        return
+
+    # Simple advice based on portfolio
+    if len(portfolio) == 1:
+        print("- Your portfolio is not diversified. Consider adding other cryptocurrencies to spread risk.")
+
+    # Advice based on market data
+    best_crypto = analyze_data(all_crypto_data)
+    print(f"- The market analysis suggests that {best_crypto['name']} is a strong candidate to buy right now.")
+
+    # Cross-reference with user's portfolio
+    if best_crypto['name'] in portfolio:
+        print(f"- You already own {best_crypto['name']}, which is great! Consider if you want to increase your position.")
+    else:
+        print(f"- You do not own {best_crypto['name']}. You might want to research it as a potential addition to your portfolio.")
+
+def create_test_portfolio(all_crypto_data):
+    print("\nCreating a test portfolio with random cryptocurrencies and fake funds...")
+    test_portfolio = {}
+
+    # Ensure we have data to create a portfolio from
+    if not all_crypto_data:
+        print("No crypto data available to create a test portfolio.")
+        return test_portfolio
+
+    # Select 3 random cryptocurrencies from the fetched data
+    num_to_select = min(3, len(all_crypto_data))
+    random_cryptos = np.random.choice(all_crypto_data, num_to_select, replace=False)
+
+    for crypto in random_cryptos:
+        # Assign a random amount between 1 and 1000
+        amount = np.random.uniform(1, 1000)
+        test_portfolio[crypto['name']] = amount
+
+    print("Test portfolio created successfully.")
+    return test_portfolio
+
+def test_accuracy_of_picks(past_data, current_data):
+    print("\nTesting accuracy of AI bot's future picks...")
+
+    if not past_data or not current_data:
+        print("Insufficient data to test accuracy.")
+        return
+
+    # Simulate a pick from the past
+    past_pick = analyze_data(past_data)
+
+    # Find the same cryptocurrency in the current data
+    current_pick_data = next((item for item in current_data if item['id'] == past_pick['id']), None)
+
+    if not current_pick_data:
+        print(f"Could not find {past_pick['name']} in the current data to verify its performance.")
+        return
+
+    # Compare the price change
+    past_price = past_pick['current_price']
+    current_price = current_pick_data['current_price']
+    price_change = ((current_price - past_price) / past_price) * 100
+
+    print(f"AI Bot's pick from the past: {past_pick['name']}")
+    print(f"Past Price: ${past_price:,.2f}")
+    print(f"Current Price: ${current_price:,.2f}")
+    print(f"Performance: {price_change:+.2f}%")
+
+    if price_change > 0:
+        print("Conclusion: The pick was a winner!")
+    else:
+        print("Conclusion: The pick did not perform well.")
+
+def strategy_section(portfolio, all_crypto_data):
+    print("\n💡 Strategy Section to Maximize Earnings:")
+
+    if not portfolio:
+        print("- Start by building a diversified portfolio. A good starting point is to invest in a mix of large-cap and mid-cap cryptocurrencies.")
+        return
+
+    # Strategy 1: Rebalancing
+    print("\n1. Portfolio Rebalancing:")
+    print("- Periodically review your portfolio to ensure it aligns with your risk tolerance. If one asset has grown significantly, consider taking some profits and reallocating to other assets to maintain diversification.")
+
+    # Strategy 2: Dollar-Cost Averaging (DCA)
+    print("\n2. Dollar-Cost Averaging (DCA):")
+    print("- Instead of investing a lump sum, consider investing smaller amounts regularly over time. This can help reduce the impact of volatility.")
+
+    # Strategy 3: Focus on High-Quality Assets
+    best_crypto = analyze_data(all_crypto_data)
+    print("\n3. Focus on High-Quality Assets:")
+    print(f"- Our analysis indicates that {best_crypto['name']} is a strong asset. Continuously look for assets with strong fundamentals, high market cap, and good trading volume.")
+
 def main():
-    portfolio = get_user_portfolio()
+    # Ask user if they want to use a test portfolio
+    use_test_portfolio = input("Do you want to use a test portfolio? (yes/no): ").lower()
 
     data = fetch_crypto_data()
     if not data:
         print("Could not fetch cryptocurrency data. Exiting.")
         return
 
+    if use_test_portfolio == 'yes':
+        portfolio = create_test_portfolio(data)
+        # For demonstration, we'll use the same data for past and current
+        # In a real scenario, you'd fetch data at different times
+        test_accuracy_of_picks(data, data)
+    else:
+        portfolio = get_user_portfolio()
+
     assess_portfolio(portfolio, data)
+    ai_bot_advisor(portfolio, data)
+    strategy_section(portfolio, data)
 
     best_crypto = analyze_data(data)
 
