@@ -285,52 +285,41 @@ def strategy_section(portfolio, all_crypto_data):
     print("\n3. Focus on High-Quality Assets:")
     print(f"- Our analysis indicates that {best_crypto['name']} is a strong asset. Continuously look for assets with strong fundamentals, high market cap, and good trading volume.")
 
-def main():
-    # Ask user if they want to use a test portfolio
-    use_test_portfolio = input("Do you want to use a test portfolio? (yes/no): ").lower()
+def simplified_main():
+    print("Welcome to the Crypto Predictor!")
+    print("This tool will help you make informed decisions about your crypto investments.")
 
     data = fetch_crypto_data()
     if not data:
         print("Could not fetch cryptocurrency data. Exiting.")
         return
 
-    if use_test_portfolio == 'yes':
-        portfolio = create_test_portfolio(data)
-        # For demonstration, we'll use the same data for past and current
-        # In a real scenario, you'd fetch data at different times
-        test_accuracy_of_picks(data, data)
-    else:
-        portfolio = get_user_portfolio()
+    while True:
+        print("\nWhat would you like to do?")
+        print("1. Get a recommendation for the best crypto to buy now.")
+        print("2. Assess your current portfolio.")
+        print("3. Get investment strategy advice.")
+        print("4. Exit.")
 
-    assess_portfolio(portfolio, data)
-    ai_bot_advisor(portfolio, data)
-    strategy_section(portfolio, data)
+        choice = input("Enter your choice (1-4): ")
 
-    best_crypto = analyze_data_with_ml(data)
-
-    print("\nBest cryptocurrency to buy based on enhanced criteria and risk assessment:")
-    print(f"Name: {best_crypto['name']}")
-    print(f"Symbol: {best_crypto['symbol']}")
-    print(f"Current Price: ${best_crypto['current_price']:.2f}")
-    print(f"24h Change: {best_crypto['price_change_percentage_24h']:.2f}%")
-    print(f"Market Cap: ${best_crypto['market_cap']:,.2f}")
-    print(f"Volume: ${best_crypto['total_volume']:,.2f}")
-
-    # The following will only be printed if the values are not NaN
-    if pd.notna(best_crypto['sma_7']):
-        print(f"SMA 7: ${best_crypto['sma_7']:.2f}")
-    if pd.notna(best_crypto['sma_30']):
-        print(f"SMA 30: ${best_crypto['sma_30']:.2f}")
-    if pd.notna(best_crypto['rsi']):
-        print(f"RSI: {best_crypto['rsi']:.2f}")
-    if pd.notna(best_crypto['macd']):
-        print(f"MACD: {best_crypto['macd']:.2f}")
-    if pd.notna(best_crypto['macd_signal']):
-        print(f"MACD Signal: {best_crypto['macd_signal']:.2f}")
-    if pd.notna(best_crypto['volatility']):
-        print(f"Volatility: {best_crypto['volatility']:.4f}")
-    if pd.notna(best_crypto['sharpe_ratio']):
-        print(f"Sharpe Ratio: {best_crypto['sharpe_ratio']:.2f}")
+        if choice == '1':
+            best_crypto = analyze_data_with_ml(data)
+            print("\n🚀 Our top recommendation is:")
+            print(f"   - **{best_crypto['name']} ({best_crypto['symbol'].upper()})**")
+            print(f"   - Current Price: ${best_crypto['current_price']:.2f}")
+            print(f"   - Why? It shows strong potential based on our advanced market analysis.")
+        elif choice == '2':
+            portfolio = get_user_portfolio()
+            assess_portfolio(portfolio, data)
+        elif choice == '3':
+            portfolio = get_user_portfolio()
+            strategy_section(portfolio, data)
+        elif choice == '4':
+            print("Goodbye and happy investing!")
+            break
+        else:
+            print("Invalid choice. Please enter a number between 1 and 4.")
 
 if __name__ == "__main__":
-    main()
+    simplified_main()
